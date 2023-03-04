@@ -24,7 +24,7 @@ class AccessService {
         .lean();
       if (holderShop) {
         return {
-          code: 'xxx',
+          code: 'xxxx',
           message: 'Shop already registered',
         };
       }
@@ -102,7 +102,7 @@ class AccessService {
       };
     } catch (error) {
       return {
-        code: 'xxx',
+        code: 'xxxx',
         message: error.message,
         status: 'error',
       };
