@@ -1,5 +1,9 @@
 'use strict';
 
+const {
+  BadRequestError,
+  ConflictRequestError,
+} = require('../core/error.response');
 const { findById } = require('../services/apikey.service');
 
 const HEADER = {
@@ -7,30 +11,22 @@ const HEADER = {
   AUTHORIZATION: 'authorization',
 };
 const apiKey = async (req, res, next) => {
-  try {
-    //get key of header
-    const key = req.headers[HEADER.API_KEY]?.toString();
-    console.log(key);
-    if (!key) {
-      return res.status(403).json({
-        message: 'Forbidden Error',
-      });
-    }
-
-    //check apikey exists database
-    const objKey = await findById(key); //findById() tao tai service, tìm ở model, return objKey
-    if (!objKey) {
-      return res.status(403).json({
-        message: 'Forbidden Error',
-      });
-    }
-
-    req.objKey = objKey; // lấy được key rồi thì ta check permission
-    return next(); //Trong expressj, next() dùng để nhảy tới rout tiếp theo mà match với url khi clien request.
-    // cụ thể nó sẽ nhảy tới route permission
-  } catch (error) {
-    next(error);
+  //get key of header
+  const key = req.headers[HEADER.API_KEY]?.toString();
+  console.log(key);
+  if (!key) {
+    throw new BadRequestError();
   }
+
+  //check apikey exists database
+  const objKey = await findById(key); //findById() tao tai service, tìm ở model, return objKey
+  if (!objKey) {
+    throw new BadRequestError();
+  }
+
+  req.objKey = objKey; // lấy được key rồi thì ta check permission
+  return next(); //Trong expressj, next() dùng để nhảy tới rout tiếp theo mà match với url khi clien request.
+  // cụ thể nó sẽ nhảy tới route permission
 };
 // check permission
 // using closure
@@ -38,26 +34,29 @@ const apiKey = async (req, res, next) => {
 const permission = (permission) => {
   return (req, res, next) => {
     if (!req.objKey.permissions) {
-      return res.status(403).json({
-        message: 'permission denied',
-      });
+      throw new BadRequestError('Permission denied');
     }
     console.log('permissions::::', req.objKey.permisions);
     const validPermission =
       req.objKey.permissions.includes(permission); // permission not 's' is parameter
     if (!validPermission) {
-      return res.status(403).json({
-        message: 'permission denied',
-      });
+      throw new BadRequestError('Permission denied');
     }
     // nếu không bị hai cái trên chặn lại thi sẽ nhảy tới route kế tiếp
-    return next()
+    return next();
+  };
+};
+
+const asyncHandler = (fn) => {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next);
   };
 };
 
 module.exports = {
   apiKey,
-  permission
+  permission,
+  asyncHandler,
 };
 
 // 'use strict';
