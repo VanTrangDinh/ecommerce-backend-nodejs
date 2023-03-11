@@ -19,7 +19,7 @@ class KeyTokenService {
       privateKey,
     });
 
-    return tokens ? publicKeyString : null;
+    return tokens 
     //    } catch (error) {
     //     return error
     //    }
